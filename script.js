@@ -1,309 +1,277 @@
-// シングルファイル簡易ゲーム集のスクリプト
-// 日本語UI、15歳向けに簡潔に実装しています。
-// 使い方: index.html をブラウザで開くだけ
+const gameContainer = document.getElementById('game-container');
 
-// --- ナビゲーション ---
-const navBtns = document.querySelectorAll('.nav-btn');
-const panels = document.querySelectorAll('.panel');
-navBtns.forEach(b=>{
-  b.addEventListener('click', ()=> {
-    navBtns.forEach(x=>x.classList.remove('active'));
-    b.classList.add('active');
-    const target = b.dataset.game;
-    panels.forEach(p=>{
-      if(p.id === target) p.classList.remove('hidden');
-      else p.classList.add('hidden');
-    });
-    // 初期化が必要なパネルだけ呼ぶ
-    if(target === 'element-match') initElementMatch();
-    if(target === 'equation-balance') loadEquation();
-    if(target === 'ph-lab') initPHLab();
-    if(target === 'quiz') initQuiz();
-  })
-});
+// --- GAME DATA ---
 
-// ----------------- ELEMENT MATCH -----------------
-const ELEMENTS = [
-  {symbol:'H', name:'水素'},
-  {symbol:'He', name:'ヘリウム'},
-  {symbol:'O', name:'酸素'},
-  {symbol:'N', name:'窒素'},
-  {symbol:'C', name:'炭素'},
-  {symbol:'Na', name:'ナトリウム'},
-  {symbol:'Cl', name:'塩素'},
-  {symbol:'K', name:'カリウム'},
-  {symbol:'Ca', name:'カルシウム'},
-  {symbol:'Fe', name:'鉄'},
-  {symbol:'S', name:'硫黄'},
-  {symbol:'Mg', name:'マグネシウム'}
+// 1. Elements Quiz Data (Common HS Level)
+const elementsData = [
+    { symbol: 'H', name: '水素' },
+    { symbol: 'He', name: 'ヘリウム' },
+    { symbol: 'C', name: '炭素' },
+    { symbol: 'N', name: '窒素' },
+    { symbol: 'O', name: '酸素' },
+    { symbol: 'Na', name: 'ナトリウム' },
+    { symbol: 'Mg', name: 'マグネシウム' },
+    { symbol: 'Al', name: 'アルミニウム' },
+    { symbol: 'Si', name: 'ケイ素' },
+    { symbol: 'S', name: '硫黄' },
+    { symbol: 'Cl', name: '塩素' },
+    { symbol: 'K', name: 'カリウム' },
+    { symbol: 'Ca', name: 'カルシウム' },
+    { symbol: 'Fe', name: '鉄' },
+    { symbol: 'Cu', name: '銅' },
+    { symbol: 'Zn', name: '亜鉛' },
+    { symbol: 'Ag', name: '銀' },
+    { symbol: 'Au', name: '金' }
 ];
 
-let em_boardEl = document.getElementById('em-board');
-let em_pairsLeft = document.getElementById('pairs-left');
-let em_moves = document.getElementById('moves');
-let em_resetBtn = document.getElementById('em-reset');
-let em_difficulty = document.getElementById('em-difficulty');
-
-let em_state = {cards:[], first:null, second:null, moves:0, pairs:0};
-
-function initElementMatch(){
-  // create board based on difficulty
-  const pairs = parseInt(em_difficulty.value,10);
-  em_state.pairs = pairs;
-  em_state.moves = 0;
-  em_state.first = em_state.second = null;
-  em_moves.textContent = '0';
-  em_pairsLeft.textContent = pairs;
-  // pick random elements
-  const pool = shuffleArray(ELEMENTS.slice()).slice(0,pairs);
-  const pairsArray = [];
-  pool.forEach((el, idx)=>{
-    pairsArray.push({id:idx, type:'symbol', text:el.symbol, match:idKey(el.symbol+el.name)});
-    pairsArray.push({id:idx, type:'name', text:el.name, match:idKey(el.symbol+el.name)});
-  });
-  const cards = shuffleArray(pairsArray);
-  em_state.cards = cards;
-  // render
-  em_boardEl.innerHTML = '';
-  cards.forEach((c, i)=>{
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.dataset.index = i;
-    card.dataset.match = c.match;
-    card.innerHTML = `<div class="front">?</div><div class="back" style="display:none">${escapeHtml(c.text)}</div>`;
-    card.addEventListener('click', onCardClick);
-    em_boardEl.appendChild(card);
-  });
-}
-
-function onCardClick(e){
-  const idx = parseInt(e.currentTarget.dataset.index,10);
-  const cardEl = e.currentTarget;
-  // ignore matched or flipped
-  if(cardEl.classList.contains('matched') || cardEl.classList.contains('flipped')) return;
-  flipCard(cardEl);
-  if(!em_state.first){
-    em_state.first = cardEl;
-  } else if(!em_state.second){
-    em_state.second = cardEl;
-    em_state.moves++;
-    em_moves.textContent = em_state.moves;
-    // check match
-    if(em_state.first.dataset.match === em_state.second.dataset.match){
-      // matched
-      setTimeout(()=>{
-        em_state.first.classList.add('matched');
-        em_state.second.classList.add('matched');
-        em_state.first = em_state.second = null;
-        em_state.pairs--;
-        em_pairsLeft.textContent = em_state.pairs;
-        if(em_state.pairs === 0){
-          alert('おめでとう！すべてのペアがそろいました。');
-        }
-      }, 400);
-    } else {
-      // flip back
-      setTimeout(()=>{
-        unflipCard(em_state.first);
-        unflipCard(em_state.second);
-        em_state.first = em_state.second = null;
-      }, 800);
+// 2. Equation Balancing Data (Coefficient answers)
+const equationsData = [
+    { 
+        parts: ['<input type="number" id="c1"> H₂', '+', '<input type="number" id="c2"> O₂', '→', '<input type="number" id="c3"> H₂O'], 
+        answer: [2, 1, 2],
+        desc: '水の生成'
+    },
+    { 
+        parts: ['<input type="number" id="c1"> N₂', '+', '<input type="number" id="c2"> H₂', '→', '<input type="number" id="c3"> NH₃'], 
+        answer: [1, 3, 2],
+        desc: 'アンモニアの生成 (ハーバー・ボッシュ法)'
+    },
+    { 
+        parts: ['<input type="number" id="c1"> Cu', '+', '<input type="number" id="c2"> O₂', '→', '<input type="number" id="c3"> CuO'], 
+        answer: [2, 1, 2],
+        desc: '銅の酸化'
     }
-  }
-}
-
-function flipCard(cardEl){
-  cardEl.classList.add('flipped');
-  cardEl.querySelector('.front').style.display='none';
-  cardEl.querySelector('.back').style.display='block';
-}
-function unflipCard(cardEl){
-  cardEl.classList.remove('flipped');
-  cardEl.querySelector('.front').style.display='block';
-  cardEl.querySelector('.back').style.display='none';
-}
-em_resetBtn.addEventListener('click', initElementMatch);
-em_difficulty.addEventListener('change', initElementMatch);
-
-// ----------------- EQUATION BALANCE -----------------
-const equations = [
-  // left and right arrays of species with their formulas (no coefficients)
-  {left:['H2','O2'], right:['H2O'], answer:[2,1,2], hint:'水の生成'},
-  {left:['Fe','O2'], right:['Fe2O3'], answer:[4,3,2], hint:'鉄の酸化'},
-  {left:['C3H8','O2'], right:['CO2','H2O'], answer:[1,5,3], hint:'プロパンの燃焼'},
-  {left:['Na','Cl2'], right:['NaCl'], answer:[2,1,2], hint:'塩の生成'},
-  {left:['HCl','NaOH'], right:['NaCl','H2O'], answer:[1,1,1,1], hint:'中和反応'}
 ];
-let eb_index = 0;
-const ebQuestionEl = document.getElementById('eb-question');
-const ebInputsEl = document.getElementById('eb-inputs');
-const ebCheckBtn = document.getElementById('eb-check');
-const ebSkipBtn = document.getElementById('eb-skip');
-const ebFeedback = document.getElementById('eb-feedback');
 
-function loadEquation(){
-  // pick random equation
-  eb_index = Math.floor(Math.random()*equations.length);
-  renderEquation(equations[eb_index]);
-  ebFeedback.textContent = '';
-}
-
-function renderEquation(q){
-  // show something like: ____ H2 + ____ O2 → ____ H2O
-  const parts = [];
-  q.left.forEach(s => parts.push(s));
-  const rightParts = [];
-  q.right.forEach(s => rightParts.push(s));
-  ebQuestionEl.textContent = q.left.join(' + ') + ' → ' + q.right.join(' + ');
-  ebInputsEl.innerHTML = '';
-  // inputs: left coefficients then right coefficients
-  q.left.forEach((s,i)=>{
-    const input = document.createElement('input');
-    input.type='number'; input.min=0; input.value=1;
-    input.dataset.pos = 'L' + i;
-    ebInputsEl.appendChild(input);
-  });
-  q.right.forEach((s,i)=>{
-    const input = document.createElement('input');
-    input.type='number'; input.min=0; input.value=1;
-    input.dataset.pos = 'R' + i;
-    ebInputsEl.appendChild(input);
-  });
-}
-
-ebCheckBtn.addEventListener('click', ()=>{
-  const q = equations[eb_index];
-  const inputs = [...ebInputsEl.querySelectorAll('input')].map(i=>parseInt(i.value||'0',10));
-  const correct = arraysEqual(inputs, q.answer);
-  if(correct){
-    ebFeedback.textContent = '正解！次の問題に進みます。';
-    ebFeedback.className = 'feedback success';
-    setTimeout(loadEquation, 800);
-  } else {
-    ebFeedback.textContent = 'ちがいます。原子の数を確認してもう一度考えてみよう。ヒント: ' + q.hint;
-    ebFeedback.className = 'feedback error';
-  }
-});
-
-ebSkipBtn.addEventListener('click', loadEquation);
-
-// ----------------- PH LAB -----------------
-const phTargetEl = document.getElementById('ph-target');
-const phCurrentEl = document.getElementById('ph-current');
-const beakerEl = document.getElementById('beaker');
-const addAcidBtn = document.getElementById('add-acid');
-const addBaseBtn = document.getElementById('add-base');
-const phResetBtn = document.getElementById('ph-reset');
-const phFeedbackEl = document.getElementById('ph-feedback');
-
-let phState = {current:7.0, target: null};
-
-function initPHLab(){
-  // set random target pH between 1 and 13 but not 7 usually
-  let t = Math.round((Math.random()*12)+1);
-  if(Math.abs(t-7) < 2) t = (t>7? t+2 : t-2);
-  phState.target = t;
-  phState.current = 7.0;
-  phTargetEl.textContent = phState.target.toFixed(1);
-  updatePHUI();
-  phFeedbackEl.textContent = '';
-}
-
-function updatePHUI(){
-  phCurrentEl.textContent = phState.current.toFixed(1);
-  // change beaker color as simple indicator
-  const c = phColorFor(phState.current);
-  beakerEl.style.background = c;
-  // check success
-  if(Math.abs(phState.current - phState.target) <= 0.4){
-    phFeedbackEl.textContent = '目標pHに近づいたよ！よくできた！';
-    phFeedbackEl.className = 'feedback success';
-  } else {
-    phFeedbackEl.textContent = '';
-    phFeedbackEl.className = 'feedback';
-  }
-}
-
-addAcidBtn.addEventListener('click', ()=>{
-  // adding acid lowers pH; amount depends on how close current is
-  const delta = 0.6 + Math.random()*0.5;
-  phState.current = Math.max(0, phState.current - delta);
-  updatePHUI();
-});
-addBaseBtn.addEventListener('click', ()=>{
-  const delta = 0.6 + Math.random()*0.5;
-  phState.current = Math.min(14, phState.current + delta);
-  updatePHUI();
-});
-phResetBtn.addEventListener('click', initPHLab);
-
-function phColorFor(pH){
-  // Return gradient based on pH (simple)
-  if(pH <= 3) return 'linear-gradient(180deg,#ffadad,#ff6b6b)'; // red
-  if(pH <= 6) return 'linear-gradient(180deg,#ffd6a5,#ffb347)'; // orange
-  if(pH < 7.5) return 'linear-gradient(180deg,#d4f4dd,#86efac)'; // greenish (near neutral)
-  if(pH <= 11) return 'linear-gradient(180deg,#a0c4ff,#6690ff)'; // blue
-  return 'linear-gradient(180deg,#cdb4db,#9b5de5)'; // purple
-}
-
-// ----------------- QUIZ -----------------
-const quizQuestions = [
-  {q:'水素の元素記号はどれ？', options:['H','He','O','N'], a:0},
-  {q:'酸性のpHはどれ？', options:['pH 2','pH 7','pH 10','pH 15'], a:0},
-  {q:'化学反応で「生成物」を意味する英語は？', options:['Reactant','Product','Catalyst','Ion'], a:1},
-  {q:'NaCl はどのような物質？', options:['金属','塩','ガス','酸'], a:1}
+// 3. pH Data
+const phData = [
+    { name: 'レモン汁', type: 'acid', label: '酸性' },
+    { name: '石けん水', type: 'base', label: 'アルカリ性' },
+    { name: '食塩水', type: 'neutral', label: '中性' },
+    { name: '炭酸飲料', type: 'acid', label: '酸性' },
+    { name: 'アンモニア水', type: 'base', label: 'アルカリ性' },
+    { name: '胃液', type: 'acid', label: '酸性' },
+    { name: '重曹 (水溶液)', type: 'base', label: 'アルカリ性' },
+    { name: '純水', type: 'neutral', label: '中性' }
 ];
-let quizIndex = 0;
-const quizQuestionEl = document.getElementById('quiz-question');
-const quizAnswersEl = document.getElementById('quiz-answers');
-const quizNextBtn = document.getElementById('quiz-next');
-const quizFeedback = document.getElementById('quiz-feedback');
 
-function initQuiz(){
-  quizIndex = 0;
-  renderQuiz();
-  quizFeedback.textContent = '';
-}
-function renderQuiz(){
-  const q = quizQuestions[quizIndex];
-  quizQuestionEl.textContent = (quizIndex+1) + '. ' + q.q;
-  quizAnswersEl.innerHTML = '';
-  q.options.forEach((opt,i)=>{
-    const btn = document.createElement('button');
-    btn.textContent = opt;
-    btn.addEventListener('click', ()=> {
-      handleQuizAnswer(i);
-    });
-    quizAnswersEl.appendChild(btn);
-  });
-}
 
-function handleQuizAnswer(selected){
-  const q = quizQuestions[quizIndex];
-  if(selected === q.a){
-    quizFeedback.textContent = '正解！';
-    quizFeedback.className = 'feedback success';
-  } else {
-    quizFeedback.textContent = '不正解。正しい答えは: ' + q.options[q.a];
-    quizFeedback.className = 'feedback error';
-  }
+// --- NAVIGATION FUNCTIONS ---
+
+function showHome() {
+    gameContainer.innerHTML = `
+        <div class="hero">
+            <h1>化学の世界へようこそ！</h1>
+            <p>高校化学の基礎をゲームで楽しく学ぼう。</p>
+            <div class="menu-grid">
+                <div class="menu-card" onclick="loadGame('elements')">
+                    <h2>🔥 元素記号マスター</h2>
+                    <p>基本の元素記号をスピード暗記！</p>
+                </div>
+                <div class="menu-card" onclick="loadGame('equations')">
+                    <h2>⚖️ 化学反応式パズル</h2>
+                    <p>係数を合わせて反応式を完成させよう。</p>
+                </div>
+                <div class="menu-card" onclick="loadGame('ph')">
+                    <h2>🍋 酸性 vs アルカリ性</h2>
+                    <p>身近な液体を仕分けしよう。</p>
+                </div>
+            </div>
+        </div>
+    `;
 }
 
-quizNextBtn.addEventListener('click', ()=>{
-  quizIndex++;
-  if(quizIndex >= quizQuestions.length){
-    alert('クイズ終了！おつかれさま。');
-    quizIndex = 0;
-  }
-  renderQuiz();
-  quizFeedback.textContent = '';
-});
+function loadGame(gameType) {
+    if (gameType === 'elements') startElementsGame();
+    if (gameType === 'equations') startEquationsGame();
+    if (gameType === 'ph') startPhGame();
+}
 
-// ----------------- ユーティリティ関数 -----------------
-function shuffleArray(a){ return a.map(v=>({v, r:Math.random()})).sort((x,y)=>x.r-y.r).map(x=>x.v) }
-function idKey(s){ return btoa(unescape(encodeURIComponent(s))) } // simple unique key generator
-function arraysEqual(a,b){ if(a.length!==b.length) return false; for(let i=0;i<a.length;i++) if(a[i]!==b[i]) return false; return true }
-function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 
-// --- 初期表示 ---
-initElementMatch();
+// --- GAME 1: ELEMENTS QUIZ ---
+
+function startElementsGame() {
+    let score = 0;
+    let questionCount = 0;
+    const maxQuestions = 5;
+
+    function nextQuestion() {
+        if (questionCount >= maxQuestions) {
+            gameContainer.innerHTML = `
+                <div class="game-area">
+                    <h2>結果発表！</h2>
+                    <p class="question-box">${score} / ${maxQuestions} 正解</p>
+                    <button class="game-btn" onclick="startElementsGame()">もう一度やる</button>
+                    <button class="game-btn" onclick="showHome()">ホームに戻る</button>
+                </div>
+            `;
+            return;
+        }
+
+        const currentEl = elementsData[Math.floor(Math.random() * elementsData.length)];
+        
+        // Create 3 wrong options + 1 correct
+        let options = [currentEl.name];
+        while (options.length < 4) {
+            let randomEl = elementsData[Math.floor(Math.random() * elementsData.length)].name;
+            if (!options.includes(randomEl)) options.push(randomEl);
+        }
+        options.sort(() => Math.random() - 0.5); // Shuffle
+
+        gameContainer.innerHTML = `
+            <div class="game-area">
+                <h2>元素記号クイズ (${questionCount + 1}/${maxQuestions})</h2>
+                <div class="question-box">${currentEl.symbol}</div>
+                <p>この記号の元素名は？</p>
+                <div class="options-grid" id="options-area">
+                    <!-- Buttons injected here -->
+                </div>
+                <div class="feedback" id="feedback"></div>
+            </div>
+        `;
+
+        const optionsArea = document.getElementById('options-area');
+        options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'game-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(opt, currentEl.name);
+            optionsArea.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(selected, correct) {
+        const feedback = document.getElementById('feedback');
+        if (selected === correct) {
+            score++;
+            feedback.style.color = 'var(--correct)';
+            feedback.innerText = '正解！ (Seikai!)';
+        } else {
+            feedback.style.color = 'var(--wrong)';
+            feedback.innerText = `残念... 正解は ${correct}`;
+        }
+        questionCount++;
+        setTimeout(nextQuestion, 1500);
+    }
+
+    nextQuestion();
+}
+
+
+// --- GAME 2: EQUATION BALANCER ---
+
+function startEquationsGame() {
+    let currentEqIndex = 0;
+
+    function renderEquation() {
+        if (currentEqIndex >= equationsData.length) {
+            gameContainer.innerHTML = `
+                <div class="game-area">
+                    <h2>全問クリア！</h2>
+                    <p>化学反応式の達人ですね。</p>
+                    <button class="game-btn" onclick="startEquationsGame()">もう一度やる</button>
+                    <button class="game-btn" onclick="showHome()">ホームに戻る</button>
+                </div>
+            `;
+            return;
+        }
+
+        const eq = equationsData[currentEqIndex];
+        
+        gameContainer.innerHTML = `
+            <div class="game-area">
+                <h2>化学反応式パズル</h2>
+                <p>${eq.desc}</p>
+                <div class="equation-display">
+                    ${eq.parts.join(' ')}
+                </div>
+                <p style="font-size: 0.9rem; margin-bottom: 1rem;">係数が1の場合は「1」を入力してね。</p>
+                <button class="game-btn" onclick="checkEquation()">答える</button>
+                <div class="feedback" id="eq-feedback"></div>
+            </div>
+        `;
+    }
+
+    // Making function accessible globally for the button click
+    window.checkEquation = function() {
+        const eq = equationsData[currentEqIndex];
+        const inputs = [
+            parseInt(document.getElementById('c1').value) || 0,
+            parseInt(document.getElementById('c2').value) || 0,
+            parseInt(document.getElementById('c3').value) || 0
+        ];
+
+        const feedback = document.getElementById('eq-feedback');
+
+        // Check if arrays match
+        const isCorrect = JSON.stringify(inputs) === JSON.stringify(eq.answer);
+
+        if (isCorrect) {
+            feedback.style.color = 'var(--correct)';
+            feedback.innerText = '素晴らしい！正解です。';
+            currentEqIndex++;
+            setTimeout(renderEquation, 1500);
+        } else {
+            feedback.style.color = 'var(--wrong)';
+            feedback.innerText = 'うーん、数が合いません。もう一度考えてみよう。';
+        }
+    };
+
+    renderEquation();
+}
+
+
+// --- GAME 3: pH SORTING ---
+
+function startPhGame() {
+    let score = 0;
+    let count = 0;
+    const maxQ = 5;
+
+    function nextPhQ() {
+        if (count >= maxQ) {
+            gameContainer.innerHTML = `
+                <div class="game-area">
+                    <h2>結果発表</h2>
+                    <p class="question-box">${score} / ${maxQ} 正解</p>
+                    <button class="game-btn" onclick="startPhGame()">もう一度</button>
+                    <button class="game-btn" onclick="showHome()">ホーム</button>
+                </div>
+            `;
+            return;
+        }
+
+        const q = phData[Math.floor(Math.random() * phData.length)];
+
+        gameContainer.innerHTML = `
+            <div class="game-area">
+                <h2>酸・塩基仕分け (${count + 1}/${maxQ})</h2>
+                <div class="question-box">${q.name}</div>
+                <p>これはどれ？</p>
+                <div class="options-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+                    <button class="game-btn" style="background:#E74C3C" onclick="checkPh('acid', '${q.type}')">酸性</button>
+                    <button class="game-btn" style="background:#2ECC71" onclick="checkPh('neutral', '${q.type}')">中性</button>
+                    <button class="game-btn" style="background:#3498DB" onclick="checkPh('base', '${q.type}')">アルカリ性</button>
+                </div>
+                <div class="feedback" id="ph-feedback"></div>
+            </div>
+        `;
+    }
+
+    window.checkPh = function(guess, answer) {
+        const feedback = document.getElementById('ph-feedback');
+        if (guess === answer) {
+            score++;
+            feedback.style.color = 'var(--correct)';
+            feedback.innerText = '正解！';
+        } else {
+            feedback.style.color = 'var(--wrong)';
+            let ansText = answer === 'acid' ? '酸性' : answer === 'base' ? 'アルカリ性' : '中性';
+            feedback.innerText = `間違い！正解は ${ansText}`;
+        }
+        count++;
+        setTimeout(nextPhQ, 1500);
+    }
+
+    nextPhQ();
+}
