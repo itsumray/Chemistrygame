@@ -1,102 +1,183 @@
-:root{
-  --bg:#f6f9ff;
-  --card:#ffffff;
-  --accent:#2b7a78;
-  --accent-2:#17bebb;
-  --text:#0f172a;
-  --muted:#6b7280;
-  --success:#16a34a;
-  --danger:#dc2626;
+:root {
+    --primary: #4A90E2; /* Science Blue */
+    --accent: #F5A623;  /* Energetic Orange */
+    --bg: #F0F4F8;      /* Light Grey-Blue */
+    --card: #FFFFFF;
+    --text: #333333;
+    --correct: #2ECC71;
+    --wrong: #E74C3C;
+    --font-main: 'Noto Sans JP', sans-serif;
+    --font-heading: 'M PLUS Rounded 1c', sans-serif;
 }
 
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  -webkit-font-smoothing:antialiased;
-  line-height:1.5;
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-.site-header{
-  background:linear-gradient(90deg,var(--accent),var(--accent-2));
-  color:#fff;
-  padding:18px 16px;
-}
-.site-header h1{margin:0;font-size:1.5rem}
-.tagline{margin:6px 0 12px;font-size:0.95rem;opacity:0.95}
-nav{display:flex;gap:8px;flex-wrap:wrap}
-.nav-btn{
-  background:rgba(255,255,255,0.12);
-  border:0;
-  color:#fff;
-  padding:8px 10px;
-  border-radius:8px;
-  cursor:pointer;
-}
-.nav-btn.active{background:#fff;color:var(--accent)}
-main{max-width:1000px;margin:18px auto;padding:0 16px}
-
-.panel{background:var(--card);border-radius:12px;padding:16px;margin-bottom:16px;box-shadow:0 1px 4px rgba(2,6,23,0.06)}
-.hidden{display:none}
-
-.board{
-  display:grid;
-  gap:10px;
-  margin:12px 0;
-}
-@media (min-width:540px){
-  .board{grid-template-columns:repeat(6,1fr)}
-}
-@media (max-width:539px){
-  .board{grid-template-columns:repeat(3,1fr)}
+body {
+    font-family: var(--font-main);
+    background-color: var(--bg);
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
-.card{
-  background:linear-gradient(180deg,#fff,#f1f5f9);
-  border-radius:8px;
-  padding:10px;
-  text-align:center;
-  cursor:pointer;
-  user-select:none;
-  min-height:64px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  box-shadow:0 1px 3px rgba(2,6,23,0.06);
-  font-weight:600;
+header {
+    background: var(--primary);
+    color: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.card.flipped{background:#fde68a}
-.card.matched{background:linear-gradient(90deg,#bbf7d0,#86efac);cursor:default;opacity:0.95}
-
-.controls{margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.stats{margin-top:8px;color:var(--muted)}
-
-.equation{font-size:1.2rem;margin:12px 0}
-.equation-inputs input{width:56px;padding:6px;border-radius:6px;border:1px solid #ddd;text-align:center;margin-right:8px}
-
-.feedback{margin-left:8px;color:var(--muted);min-width:160px}
-
-.beaker{
-  width:220px;height:200px;border-radius:8px;border:6px solid #cbd5e1;position:relative;overflow:hidden;
-  background:linear-gradient(180deg,#e6eef6,#d9edf9);
-  display:flex;align-items:flex-end;justify-content:center;
+.logo {
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 800;
 }
-.beaker::after{
-  content:"";
-  position:absolute;left:0;right:0;bottom:0;height:20%;background:linear-gradient(180deg,rgba(255,255,255,0.08),rgba(0,0,0,0.06));
+
+nav button {
+    background: transparent;
+    border: 2px solid white;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    transition: 0.3s;
+    margin-left: 10px;
 }
-.ph-container{display:flex;gap:24px;flex-wrap:wrap}
-.ph-controls{min-width:220px}
-.buttons button{margin-right:6px}
 
-.feedback.success{color:var(--success)}
-.feedback.error{color:var(--danger)}
+nav button:hover {
+    background: white;
+    color: var(--primary);
+}
 
-.quiz-card{padding:12px}
-.answers{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-.answers button{padding:8px;border-radius:8px;border:1px solid #ddd;background:#fff;cursor:pointer;text-align:left}
-.answers button.selected{background:#eef2ff;border-color:#c7d2fe}
-.site-footer{max-width:1000px;margin:0 auto;padding:12px 16px;color:var(--muted);font-size:0.9rem}
+main {
+    flex: 1;
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Home Screen */
+.hero {
+    text-align: center;
+}
+
+.hero h1 {
+    font-family: var(--font-heading);
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.menu-card {
+    background: var(--card);
+    padding: 1.5rem;
+    border-radius: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    cursor: pointer;
+    transition: transform 0.2s;
+    border-bottom: 5px solid var(--primary);
+}
+
+.menu-card:hover {
+    transform: translateY(-5px);
+}
+
+.menu-card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Game Interface */
+.game-area {
+    background: var(--card);
+    padding: 2rem;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.question-box {
+    font-size: 2rem;
+    font-weight: bold;
+    margin: 2rem 0;
+    padding: 1rem;
+    background: #eef;
+    border-radius: 10px;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.game-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 1rem;
+    font-size: 1.1rem;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: var(--font-heading);
+    transition: background 0.2s;
+}
+
+.game-btn:hover {
+    background: #357ABD;
+}
+
+.feedback {
+    margin-top: 1rem;
+    font-weight: bold;
+    height: 1.5rem;
+}
+
+/* Equation Game Specifics */
+.equation-display {
+    font-size: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.equation-input {
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
+    text-align: center;
+    border: 2px solid var(--primary);
+    border-radius: 5px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    nav {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+}
