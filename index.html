@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>化学ミニゲーム - うたがく化学ラボ</title>
+  <link rel="stylesheet" href="styles.css" />
+  <meta name="description" content="15歳向けの化学を学ぶためのミニゲーム集（元素カード、化学式の係数合わせ、pHミニラボなど）。" />
+</head>
+<body>
+  <header class="site-header">
+    <h1>うたがく化学ラボ</h1>
+    <p class="tagline">遊びながら学ぶ、15歳向けの化学ミニゲーム</p>
+    <nav>
+      <button data-game="home" class="nav-btn active">ホーム</button>
+      <button data-game="element-match" class="nav-btn">元素マッチ</button>
+      <button data-game="equation-balance" class="nav-btn">化学式をそろえる</button>
+      <button data-game="ph-lab" class="nav-btn">pHミニラボ</button>
+      <button data-game="quiz" class="nav-btn">クイズ</button>
+    </nav>
+  </header>
+
+  <main id="app">
+    <!-- HOME -->
+    <section id="home" class="panel">
+      <h2>ようこそ！</h2>
+      <p>このサイトは日本の15歳前後の生徒向けに、基本的な化学の考え方を遊びで学べるように作りました。安全第一で、実験は教科書や先生と一緒に行ってください。</p>
+      <ul>
+        <li>元素マッチ：元素の記号と名前を当てるカードゲーム（記憶力＋元素の理解）</li>
+        <li>化学式をそろえる：反応の係数を考えて化学反応式をつり合わせる練習</li>
+        <li>pHミニラボ：酸と塩基を混ぜて目的のpHに近づけるシミュレーション</li>
+        <li>クイズ：短い選択問題で知識をチェック</li>
+      </ul>
+      <p>下のボタンからゲームを選んで始めよう！</p>
+    </section>
+
+    <!-- ELEMENT MATCH -->
+    <section id="element-match" class="panel hidden">
+      <h2>元素マッチ（カードめくり）</h2>
+      <p>カードをめくって、元素の名前と記号をペアにしよう。全部ペアになるまで続けてね。</p>
+      <div id="em-stats" class="stats">残りペア: <span id="pairs-left">--</span> ・ 手数: <span id="moves">0</span></div>
+      <div id="em-board" class="board"></div>
+      <div class="controls">
+        <button id="em-reset">リセット</button>
+        <label>難易度：
+          <select id="em-difficulty">
+            <option value="6">かんたん（6ペア）</option>
+            <option value="9" selected>ふつう（9ペア）</option>
+            <option value="12">むずかしい（12ペア）</option>
+          </select>
+        </label>
+      </div>
+    </section>
+
+    <!-- EQUATION BALANCE -->
+    <section id="equation-balance" class="panel hidden">
+      <h2>化学式をそろえる</h2>
+      <p>左の式の係数を入力して、原子数が一致するように揃えよう。正しいと次の問題へ。</p>
+      <div id="eb-question" class="equation"></div>
+      <div id="eb-inputs" class="equation-inputs"></div>
+      <div class="controls">
+        <button id="eb-check">チェック</button>
+        <button id="eb-skip">スキップ</button>
+        <div id="eb-feedback" class="feedback"></div>
+      </div>
+    </section>
+
+    <!-- PH LAB -->
+    <section id="ph-lab" class="panel hidden">
+      <h2>pHミニラボ（シミュレーション）</h2>
+      <p>目標pHを達成するために酸または塩基を少しずつ加えて調整しよう。変化と指示薬の色を観察して学べるよ。</p>
+      <div class="ph-container">
+        <div class="ph-controls">
+          <div class="target">目標pH: <span id="ph-target">--</span></div>
+          <div>現在pH: <span id="ph-current">7.0</span></div>
+          <div class="buttons">
+            <button id="add-acid">酸を少し加える</button>
+            <button id="add-base">塩基を少し加える</button>
+            <button id="ph-reset">リセット</button>
+          </div>
+          <div id="ph-feedback" class="feedback"></div>
+        </div>
+        <div class="ph-beaker">
+          <div id="beaker" class="beaker" title="溶液の色は指示薬の目安です"></div>
+          <div class="legend">
+            指示薬の色（簡易目安）：
+            <ul>
+              <li>赤：pH 0–3（強酸）</li>
+              <li>橙・黄：pH 4–6（弱酸〜中性）</li>
+              <li>緑：pH 7（中性）</li>
+              <li>青：pH 8–11（弱アルカリ）</li>
+              <li>紫：pH 12–14（強アルカリ）</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- QUIZ -->
+    <section id="quiz" class="panel hidden">
+      <h2>クイズ</h2>
+      <div id="quiz-card" class="quiz-card">
+        <div id="quiz-question"></div>
+        <div id="quiz-answers" class="answers"></div>
+        <div class="controls">
+          <button id="quiz-next">次へ</button>
+          <div id="quiz-feedback" class="feedback"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>作成: うたがく化学ラボ — 教材用途で自由に使ってください（教育目的）。</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
